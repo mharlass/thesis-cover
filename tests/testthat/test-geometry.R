@@ -16,15 +16,6 @@ test_that("geometry has one row per line per vertex", {
   expect_true(all(is.finite(geometry$lines$y)))
 })
 
-test_that("the fade reaches zero at both ends and one in the middle", {
-  fade <- cover_geometry(cover_params(lines = 8))$lines %>%
-    distinct(x, fade)
-
-  expect_equal(first(fade$fade), 0)
-  expect_equal(last(fade$fade), 0)
-  expect_equal(max(fade$fade), 1)
-})
-
 test_that("strata count is honoured and the crest comes first", {
   walk(0:6, \(k) {
     strata <- cover_geometry(cover_params(strata = k))$strata

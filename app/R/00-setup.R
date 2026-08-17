@@ -14,6 +14,8 @@ library(grid)
 library(farver)
 library(viridisLite)
 library(systemfonts)
+library(svglite)
+library(ragg)
 
 #' Register the bundled Inter faces under the family name "Inter".
 #'

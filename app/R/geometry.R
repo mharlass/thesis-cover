@@ -7,7 +7,6 @@ TRIM_WIDTH <- 170
 TRIM_HEIGHT <- 240
 BLEED <- 3
 X_STEP <- 2 # sampling interval along the wrap
-FADE_WIDTH <- 22 # width of the fade to background at each end of the wrap
 
 #' Page geometry for a given spine width.
 #'
@@ -81,7 +80,6 @@ cover_geometry <- function(params) {
   ))
   bottom <- 235.5 - 3 * smoothstep(front_x + 20, width, x) + 1.6 * noise_at(base, 40, x)
   spread <- 0.24 + 0.76 * smoothstep(6, front_x + 70, x)
-  fade <- pmin(1, x / FADE_WIDTH) * pmin(1, (width - x) / FADE_WIDTH)
 
   style <- cohort_style(params, n)
   lines <- seq_len(n) %>%
@@ -94,8 +92,7 @@ cover_geometry <- function(params) {
           crest * 94 * spread * (0.06 + 0.94 * rise) -
           0.9 * params$dispersion * noise_at(per_line[-1, i], 9, x) +
           offsets[i] * params$dispersion -
-          params$weave * 7 * noise_at(weave[, i], 80, x),
-        fade = fade
+          params$weave * 7 * noise_at(weave[, i], 80, x)
       )
     }) %>%
     list_rbind() %>%
