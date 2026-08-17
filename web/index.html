@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Thesis cover</title>
+    <meta
+      name="description"
+      content="Generate a PhD thesis cover wrap — back, spine and front on one sheet — and download it as SVG, PDF or PNG."
+    />
+    <meta name="color-scheme" content="dark" />
+    <meta name="theme-color" content="#161826" />
+    <link
+      rel="icon"
+      href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='6' fill='%23161826'/><path d='M3 24 Q10 20 16 12 T29 8' stroke='%239184d9' stroke-width='2.5' fill='none'/></svg>"
+    />
+    <!-- Paint the page background before any stylesheet arrives, so a slow
+         connection sees the dark page rather than a white flash. -->
+    <style>
+      html {
+        background: #161826;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="app"></div>
+    <noscript>
+      <p style="color: #e9e9ed; font-family: system-ui, sans-serif">
+        This generator draws the cover in your browser, so it needs JavaScript.
+        The command-line renderer in the repository does the same job offline.
+      </p>
+    </noscript>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

@@ -1,0 +1,27 @@
+{
+  "name": "thesis-cover-web",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Static browser build of the thesis cover generator.",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "test": "vitest run",
+    "check": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@pdf-lib/fontkit": "^1.1.1",
+    "@preact/signals": "^2.11.1",
+    "pdf-lib": "^1.17.1",
+    "preact": "^10.29.8"
+  },
+  "devDependencies": {
+    "@types/node": "^26.2.0",
+    "playwright": "^1.62.1",
+    "typescript": "^5.9.3",
+    "vite": "^8.2.1",
+    "vitest": "^4.1.10"
+  }
+}
