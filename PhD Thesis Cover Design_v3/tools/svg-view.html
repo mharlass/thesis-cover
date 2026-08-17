@@ -1,0 +1,9 @@
+<!DOCTYPE html>
+<html><head><meta charset="utf-8">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500&display=swap">
+<style>html,body{margin:0;background:#0b0c12}#w{display:flex;justify-content:center}#w svg{max-width:100vw;max-height:100vh;height:100vh;width:auto;display:block}</style></head>
+<body><div id="w"></div>
+<script>
+fetch('../thesis-cover.svg').then(r=>r.text()).then(t=>{document.getElementById('w').innerHTML=t;document.title='OK';});
+</script>
+</body></html>

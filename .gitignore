@@ -1,0 +1,23 @@
+# Delivered snapshots of the legacy design-tool exports; large and regenerable
+*.zip
+
+# macOS
+.DS_Store
+
+# Shinylive build output (rebuilt by .github/workflows/deploy-pages.yml)
+_site/
+
+# R
+.Rhistory
+.RData
+.Rproj.user/
+renv/library/
+renv/local/
+renv/cellar/
+renv/lock/
+renv/python/
+renv/sandbox/
+renv/staging/
+
+# Scratch renders
+/scratch/

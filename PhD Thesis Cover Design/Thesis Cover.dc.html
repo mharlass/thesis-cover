@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="_ds/nocturne-345877df-a241-41f5-a366-78d203f4d9c8/styles.css">
+  <script src="_ds/nocturne-345877df-a241-41f5-a366-78d203f4d9c8/_ds_bundle.js"></script>
+  <style>body{margin:0;background:var(--color-bg);} a{color:var(--color-accent-300);} a:hover{color:var(--color-accent-200);}</style>
+</helmet>
+<div style="min-height:100vh;padding:26px 34px 40px;color:var(--color-text);font-family:var(--font-body);max-width:1280px;margin:0 auto;box-sizing:border-box">
+  <div style="display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;margin-bottom:6px">
+    <div style="font-size:21px;font-weight:500">Thesis cover</div>
+    <div style="font-size:12.5px;color:var(--color-neutral-500)">{{ metaLine }}</div>
+  </div>
+  <div style="font-size:12px;color:var(--color-neutral-600);margin-bottom:18px">Cohort-trajectory ridge after Suppl. Fig. 3 &mdash; one line per simulated birth cohort, accent lines mark risk strata</div>
+  <div style="font-size:11px;letter-spacing:0.08em;color:var(--color-neutral-500);margin-bottom:8px">FULL WRAP &mdash; BACK &middot; SPINE &middot; FRONT</div>
+  <div ref="{{ wrapRef }}" style="background:#0d0e16;border:1px solid var(--color-neutral-900);border-radius:var(--radius-md);padding:14px;box-shadow:var(--shadow-sm)"></div>
+  <div style="display:grid;grid-template-columns:minmax(0,420px) minmax(260px,1fr);gap:28px;margin-top:26px;align-items:start">
+    <div>
+      <div style="font-size:11px;letter-spacing:0.08em;color:var(--color-neutral-500);margin-bottom:8px">FRONT &mdash; TRIMMED 170 &times; 240 MM</div>
+      <div ref="{{ frontRef }}" style="background:#0d0e16;border:1px solid var(--color-neutral-900);border-radius:var(--radius-md);padding:14px;box-shadow:var(--shadow-sm)"></div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:14px;padding-top:24px">
+      <button class="btn btn-primary" onClick="{{ download }}" style="align-self:flex-start">Download this SVG</button>
+      <div style="font-size:13px;line-height:1.55;color:var(--color-neutral-400)">
+        <div style="color:var(--color-neutral-300);font-weight:500;margin-bottom:4px">Files</div>
+        <div>thesis-cover.svg &mdash; the editable cover (defaults)</div>
+        <div>generate_cover.R &mdash; regenerates it: <span style="color:var(--color-neutral-300)">Rscript generate_cover.R</span></div>
+        <div>cover-generator.js &mdash; same algorithm, drives this preview</div>
+      </div>
+      <div style="font-size:13px;line-height:1.55;color:var(--color-neutral-400)">
+        <div style="color:var(--color-neutral-300);font-weight:500;margin-bottom:4px">Print notes</div>
+        <div>Spine defaults to 12 mm &mdash; set the real width from the printer&rsquo;s page-count calculation, then re-download.</div>
+        <div>A trim/fold/safe-area guides layer (id <span style="color:var(--color-neutral-300)">guides</span>) ships hidden inside the SVG.</div>
+        <div>Text stays live SVG text &mdash; have Inter installed when editing, and convert to outlines for final print handoff.</div>
+      </div>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{
+  &quot;spineWidthMm&quot;: {&quot;editor&quot;: &quot;range&quot;, &quot;default&quot;: 12, &quot;min&quot;: 6, &quot;max&quot;: 24, &quot;step&quot;: 0.5, &quot;unit&quot;: &quot;mm&quot;, &quot;tsType&quot;: &quot;number&quot;, &quot;section&quot;: &quot;Print&quot;},
+  &quot;showGuides&quot;: {&quot;editor&quot;: &quot;boolean&quot;, &quot;default&quot;: false, &quot;tsType&quot;: &quot;boolean&quot;, &quot;section&quot;: &quot;Print&quot;},
+  &quot;seed&quot;: {&quot;editor&quot;: &quot;int&quot;, &quot;default&quot;: 42, &quot;tsType&quot;: &quot;number&quot;, &quot;section&quot;: &quot;Line art&quot;},
+  &quot;strataCount&quot;: {&quot;editor&quot;: &quot;range&quot;, &quot;default&quot;: 3, &quot;min&quot;: 0, &quot;max&quot;: 6, &quot;step&quot;: 1, &quot;tsType&quot;: &quot;number&quot;, &quot;section&quot;: &quot;Line art&quot;}
+}">
+class Component extends DCLogic {
+  componentDidMount() {
+    import('./cover-generator.js').then(m => { this._mod = m; this._paint(); });
+  }
+  componentDidUpdate() { this._paint(); }
+  _params() {
+    const p = this.props;
+    return {
+      seed: Math.round(+(p.seed ?? 42)),
+      spineMm: +(p.spineWidthMm ?? 12),
+      strata: Math.round(+(p.strataCount ?? 3)),
+      showGuides: !!(p.showGuides ?? false),
+    };
+  }
+  _paint() {
+    if (!this._mod || !this._wrap || !this._front) return;
+    const o = this._params(), key = JSON.stringify(o);
+    if (key === this._last) return;
+    this._last = key;
+    this._svg = this._mod.buildCoverSVG(o);
+    const fit = (el, vb) => {
+      el.innerHTML = this._svg;
+      const s = el.querySelector('svg');
+      s.removeAttribute('width'); s.removeAttribute('height');
+      s.style.cssText = 'width:100%;height:auto;display:block';
+      if (vb) s.setAttribute('viewBox', vb);
+    };
+    fit(this._wrap, null);
+    fit(this._front, `${3 + 170 + o.spineMm} 3 170 240`);
+  }
+  renderVals() {
+    const o = this._params();
+    return {
+      wrapRef: el => { this._wrap = el; this._paint(); },
+      frontRef: el => { this._front = el; this._paint(); },
+      download: () => {
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(new Blob([this._svg || ''], { type: 'image/svg+xml' }));
+        a.download = 'thesis-cover.svg'; a.click();
+      },
+      metaLine: `17 \u00d7 24 cm \u00b7 bleed 3 mm \u00b7 spine ${o.spineMm} mm \u00b7 wrap ${346 + o.spineMm} \u00d7 246 mm \u00b7 seed ${o.seed}`,
+    };
+  }
+}
+</script>
+</body>
+</html>
