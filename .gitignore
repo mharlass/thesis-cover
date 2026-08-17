@@ -8,8 +8,11 @@ uploads/
 # macOS
 .DS_Store
 
-# Shinylive build output (rebuilt by .github/workflows/deploy-pages.yml)
+# Build output (rebuilt by scripts/, and by .github/workflows/deploy-pages.yml)
 _site/
+/thesis-cover.svg
+/thesis-cover.pdf
+/thesis-cover.png
 
 # R
 .Rhistory
