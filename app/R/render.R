@@ -77,16 +77,16 @@ view_size <- function(dims, view = "wrap") {
 ridge_rows <- function(lines) {
   cohort <- lines %>%
     filter(!is_strata) %>%
-    mutate(group = str_c("cohort-", line_id))
+    mutate(group = paste0("cohort-", line_id))
   strata <- lines %>%
     filter(is_strata) %>%
-    mutate(group = str_c("strata-", line_id))
+    mutate(group = paste0("strata-", line_id))
   halo <- strata %>%
     cross_join(GLOW_HALOS) %>%
     mutate(
       linewidth = linewidth * width_mult,
       alpha = alpha * alpha_mult,
-      group = str_c(group, "-halo-", width_mult)
+      group = paste0(group, "-halo-", width_mult)
     )
   bind_rows(cohort, halo, strata)
 }
@@ -201,13 +201,13 @@ guide_layers <- function(dims, show) {
     ),
     annotate("text",
       x = c(BLEED, BLEED + TRIM_WIDTH, dims$front_x) + c(4, 1.2, 4), y = 8.5,
-      label = c("back", str_glue("spine {dims$spine} mm"), "front"),
+      label = c("back", glue("spine {dims$spine} mm"), "front"),
       colour = NOCTURNE[["n500"]], size = 2.8, size.unit = "mm",
       family = "Inter", hjust = 0, vjust = 0.5
     ),
     annotate("text",
       x = BLEED + 4, y = dims$height - 4.5,
-      label = str_glue(
+      label = glue(
         "trim {TRIM_WIDTH} × {TRIM_HEIGHT} mm · bleed {BLEED} mm · ",
         "total {dims$width} × {dims$height} mm"
       ),
@@ -245,7 +245,7 @@ title_overflow <- function(params) {
 #'   extension, so it can be given explicitly.
 #' @returns `path`, invisibly.
 cover_save <- function(params, path, view = "wrap", dpi = 300,
-                       format = str_to_lower(str_extract(path, "[^.]+$"))) {
+                       format = tolower(sub("^.*\\.", "", path))) {
   geometry <- cover_geometry(params)
   size <- view_size(geometry$dims, view)
 

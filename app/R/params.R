@@ -127,20 +127,20 @@ check_param <- function(name, value, editor, lower, upper) {
 
 check_number <- function(name, value, lower, upper, whole = FALSE) {
   if (!is.numeric(value) || length(value) != 1 || !is.finite(value)) {
-    return(str_glue("`{name}` must be a single finite number, not {describe_value(value)}."))
+    return(glue("`{name}` must be a single finite number, not {describe_value(value)}."))
   }
   if (whole && value != round(value)) {
-    return(str_glue("`{name}` must be a whole number, not {value}."))
+    return(glue("`{name}` must be a whole number, not {value}."))
   }
   if (value < lower || value > upper) {
-    return(str_glue("`{name}` must lie in [{lower}, {upper}], not {value}."))
+    return(glue("`{name}` must lie in [{lower}, {upper}], not {value}."))
   }
   ""
 }
 
 check_flag <- function(name, value) {
   if (!is.logical(value) || length(value) != 1 || is.na(value)) {
-    return(str_glue("`{name}` must be TRUE or FALSE, not {describe_value(value)}."))
+    return(glue("`{name}` must be TRUE or FALSE, not {describe_value(value)}."))
   }
   ""
 }
@@ -148,14 +148,14 @@ check_flag <- function(name, value) {
 check_enum <- function(name, value) {
   allowed <- paste(STRATA_PALETTES, collapse = ", ")
   if (!is.character(value) || length(value) != 1 || !value %in% STRATA_PALETTES) {
-    return(str_glue("`{name}` must be one of {allowed}, not {describe_value(value)}."))
+    return(glue("`{name}` must be one of {allowed}, not {describe_value(value)}."))
   }
   ""
 }
 
 check_text <- function(name, value) {
   if (!is.character(value) || length(value) < 1 || anyNA(value)) {
-    return(str_glue(
+    return(glue(
       "`{name}` must be a character vector without missing values, ",
       "not {describe_value(value)}."
     ))
@@ -167,5 +167,5 @@ describe_value <- function(value) {
   if (is.atomic(value) && length(value) == 1 && !is.na(value)) {
     return(encodeString(as.character(value), quote = "\""))
   }
-  str_glue("{class(value)[[1]]} of length {length(value)}")
+  glue("{class(value)[[1]]} of length {length(value)}")
 }

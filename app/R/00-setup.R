@@ -4,11 +4,16 @@
 # starts, and scripts/generate_cover.R sources it in the same order, so this
 # file runs first and the rest may assume these packages are attached.
 
+# Every package attached here is downloaded, unpacked and attached before the
+# WebAssembly build can draw its first frame, so the list is kept to what is
+# actually used. glue is free — Shiny depends on it, so webR already ships it
+# in the base image — which is why the handful of interpolations here use it
+# and the rest of the string work is base R. See "Startup cost" in AGENTS.md
+# for what each remaining package costs before adding to this list.
 library(dplyr)
-library(tidyr)
 library(tibble)
 library(purrr)
-library(stringr)
+library(glue)
 library(ggplot2)
 library(grid)
 library(farver)

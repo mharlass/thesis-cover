@@ -15,11 +15,11 @@ cover_query <- function(params) {
   if (length(changed) == 0) {
     return("?")
   }
-  str_c("?", str_c(changed, "=", map_chr(params[changed], encode_value), collapse = "&"))
+  paste0("?", paste0(changed, "=", map_chr(params[changed], encode_value), collapse = "&"))
 }
 
 encode_value <- function(value) {
-  URLencode(str_c(as.character(value), collapse = "|"), reserved = TRUE)
+  URLencode(paste(as.character(value), collapse = "|"), reserved = TRUE)
 }
 
 #' Read a parameter set back out of a query string.
@@ -30,17 +30,18 @@ encode_value <- function(value) {
 #' @param query A query string, with or without its leading `?`.
 #' @returns A parameter set from [cover_params()].
 cover_params_from_query <- function(query) {
-  pairs <- query %>%
-    str_remove("^\\?") %>%
-    str_split("&") %>%
+  pairs <- sub("^\\?", "", query) %>%
+    strsplit("&", fixed = TRUE) %>%
     pluck(1) %>%
-    keep(str_detect, "=")
+    keep(\(pair) grepl("=", pair, fixed = TRUE))
   if (length(pairs) == 0) {
     return(cover_params())
   }
-  parts <- str_split_fixed(pairs, "=", 2)
-  known <- intersect(parts[, 1], PARAM_SPEC$name)
-  overrides <- parts[match(known, parts[, 1]), 2] %>%
+  # Split on the first "=" only, so an encoded value may contain one.
+  names <- sub("=.*$", "", pairs)
+  values <- sub("^[^=]*=", "", pairs)
+  known <- intersect(names, PARAM_SPEC$name)
+  overrides <- values[match(known, names)] %>%
     set_names(known) %>%
     imap(\(text, name) decode_value(URLdecode(text), name))
 
@@ -51,7 +52,7 @@ decode_value <- function(text, name) {
   switch(PARAM_SPEC$editor[PARAM_SPEC$name == name],
     boolean = as.logical(text),
     enum = text,
-    text = str_split(text, fixed("|"))[[1]],
+    text = strsplit(text, "|", fixed = TRUE)[[1]],
     suppressWarnings(as.numeric(text))
   )
 }

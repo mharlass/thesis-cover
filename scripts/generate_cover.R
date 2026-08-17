@@ -23,11 +23,11 @@ parse_args <- function(args) {
     stop("Arguments must be given as --name value pairs.", call. = FALSE)
   }
   flags <- args[seq(1, length(args), by = 2)]
-  if (!all(str_starts(flags, "--"))) {
+  if (!all(startsWith(flags, "--"))) {
     stop("Arguments must be given as --name value pairs.", call. = FALSE)
   }
   values <- args[seq(2, length(args), by = 2)] %>%
-    set_names(str_remove(flags, "^--"))
+    set_names(sub("^--", "", flags))
   known <- intersect(names(values), PARAM_SPEC$name)
   c(
     imap(values[known], \(text, name) decode_value(text, name)),
