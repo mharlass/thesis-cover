@@ -101,4 +101,4 @@ Consequences of rendering through ggplot rather than emitting SVG by hand. All w
 - `tests/testthat/` — the test suite.
 - `PhD Thesis Cover Design/`, `PhD Thesis Cover Design_v3/` — **archive.** The original base-R SVG string writer, its 1:1 JavaScript mirror and the proprietary "dc" preview component, kept as reference and as fixtures for the regression test. Do not develop here. The R/JavaScript parity contract they document no longer applies.
 - `candidates/` — SVGs downloaded from the old preview app. `thesis-cover_v3.1.svg` is reproduced exactly by the `candidate_v31` preset, whose settings were recovered from the file itself.
-- `PhD Thesis Cover Design_v3/uploads/` — source material from the thesis project. Reference inputs; do not modify.
+- `*/uploads/` — source material from the thesis project (`suppl_figure_3.pdf`, draft chapters, the title-page matter). **Gitignored on purpose**: it is unpublished work and this repository is public. Present locally, restorable from the `*.zip` snapshots. Reference inputs; do not modify.
