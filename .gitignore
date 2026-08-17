@@ -1,6 +1,10 @@
 # Delivered snapshots of the legacy design-tool exports; large and regenerable
 *.zip
 
+# Unpublished thesis source material. Kept locally as reference for the
+# artwork, deliberately not published with this repository.
+uploads/
+
 # macOS
 .DS_Store
 
