@@ -1,11 +1,9 @@
-// The gate on the port.
+// The geometry regression gate.
 //
-// app/R/ is the definition of the artwork. This file asserts that the
-// TypeScript pipeline reproduces what the R pipeline produced, for a spread of
-// parameter sets chosen to reach the branches the legacy SVGs never do.
-// Regenerate the fixture with `Rscript scripts/dump_geometry_fixture.R` after
-// any deliberate change to the R side, and expect this to fail loudly after an
-// accidental one.
+// The fixture freezes representative output from twelve parameter sets chosen
+// to reach branches the two legacy SVGs do not. Intentional geometry changes
+// must update this fixture and the rendered samples together; accidental drift
+// should fail loudly.
 
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
@@ -45,12 +43,14 @@ interface FixtureCase {
 }
 
 const fixture: Record<string, FixtureCase> = JSON.parse(
-  readFileSync(fileURLToPath(new URL("./fixtures/r-geometry.json", import.meta.url)), "utf8"),
+  readFileSync(
+    fileURLToPath(new URL("./fixtures/geometry-regression.json", import.meta.url)),
+    "utf8",
+  ),
 );
 
-// Tolerance is 1e-6 mm. Both sides evaluate the same arithmetic on IEEE
-// doubles, so agreement should be near-exact; anything looser would let a real
-// divergence through.
+// Tolerance is 1e-6 mm. The frozen values and implementation both use IEEE
+// doubles, so anything looser would let real drift through.
 const TOL = 1e-6;
 
 describe.each(Object.entries(fixture))("%s", (_name, expected) => {

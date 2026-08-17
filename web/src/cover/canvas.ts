@@ -18,8 +18,7 @@ import { GLOW_HALOS, viewSize } from "./scene";
  *
  * The soft halo behind a stratum is a real Gaussian blur where the browser
  * supports one. Safari only gained canvas filters in 18.1, so the fallback
- * stacks progressively wider, fainter strokes — the same approximation the
- * ggplot renderer used, for the same reason.
+ * stacks progressively wider, fainter strokes.
  */
 function supportsFilter(ctx: CanvasRenderingContext2D): boolean {
   try {
@@ -180,8 +179,8 @@ function drawRidge(
 function drawText(ctx: CanvasRenderingContext2D, text: SceneText): void {
   ctx.save();
   ctx.translate(text.x, text.y);
-  // cover_text() records the spine's rotation the way ggplot does, negative
-  // for clockwise; canvas measures clockwise positive, as SVG does.
+  // Geometry records clockwise rotation as negative; canvas and SVG use
+  // clockwise-positive angles.
   if (text.angle !== 0) ctx.rotate((-text.angle * Math.PI) / 180);
   ctx.font = `${text.weight} ${text.size}px Inter, sans-serif`;
   ctx.letterSpacing = `${text.tracking}px`;

@@ -3,8 +3,8 @@
 #
 #   scripts/subset_fonts.sh
 #
-# app/www/fonts/ holds the full faces, which the R pipeline registers and which
-# are the licensed originals. The browser build does not need all 2,500 glyphs:
+# web/fonts/ holds the licensed full faces. The browser build does not need all
+# 2,500 glyphs:
 # a first visit should not spend 830 kB on type it will never draw. Subsetting
 # to Latin and the punctuation the cover uses takes each face from ~410 kB to
 # ~45 kB as woff2.
@@ -18,15 +18,13 @@
 #                    pdf-lib embeds TrueType and cannot read woff2.
 #
 # Inter is under the SIL Open Font License 1.1, which permits subsetting; the
-# licence is copied alongside the output. Do not install these into a system
-# font library — see the Gotchas section of AGENTS.md for why that breaks the
-# R side.
+# licence is copied alongside the output.
 
 set -euo pipefail
 
 cd "$(dirname "$0")/.."
 
-SOURCE_DIR="app/www/fonts"
+SOURCE_DIR="web/fonts"
 DEST_DIR="web/src/fonts"
 
 # Latin, Latin Extended-A and -B, spacing modifiers, general punctuation,

@@ -1,11 +1,9 @@
 // The cover as an SVG file.
 //
 // This is the format the printer gets, so the type stays live text and the
-// artwork stays vector. Structure follows the original generator's, including
-// the named groups the ggplot rewrite could not produce — svglite emitted its
-// own structure, so #background, #ridge, #cohort-lines and the rest went away.
-// Writing the file directly brings them back, which is what makes the output
-// addressable in Illustrator.
+// artwork stays vector. Structure follows the original generator's named
+// groups, including #background, #ridge, and #cohort-lines, which keeps the
+// output addressable in Illustrator.
 
 import { smoothPathData } from "./path";
 import type { CoverScene, SceneGuide, SceneText, Stop } from "./scene";
@@ -102,9 +100,7 @@ export function sceneToSvg(scene: CoverScene, options: SvgOptions = {}): string 
     `<linearGradient id="foldShade" x1="0" y1="0" x2="1" y2="0">${stopTags(scene.fold.stops)}</linearGradient>`,
     `<mask id="fadeMask"><rect x="0" y="0" width="${num(scene.dims.width)}" ` +
       `height="${num(scene.dims.height)}" fill="url(#edgeFade)"/></mask>`,
-    // The soft halo behind a highlighted stratum. The ggplot rewrite had to
-    // stack three progressively wider, fainter strokes because grid has no
-    // blur; a real Gaussian is available here.
+    // The soft halo behind a highlighted stratum uses a real Gaussian here.
     `<filter id="glow" x="-30%" y="-30%" width="160%" height="160%">` +
       `<feGaussianBlur stdDeviation="${scene.ridge.find((s) => s.blur > 0)?.blur ?? 1.1}"/></filter>`,
   ].join("\n");
@@ -168,8 +164,8 @@ function textTag(text: SceneText): string {
   if (text.angle === 0) {
     return `<text x="${num(text.x)}" y="${num(text.y)}" ${common}>${label}</text>`;
   }
-  // The spine reads top to bottom, which is a +90° rotation in SVG's
-  // y-down space; cover_text() records it as ggplot's -90.
+  // The spine reads top to bottom, which is a +90° rotation in SVG's y-down
+  // coordinate space. Geometry stores the equivalent angle as -90°.
   return (
     `<text transform="translate(${num(text.x)} ${num(text.y)}) rotate(${num(-text.angle)})" ` +
     `${common}>${label}</text>`

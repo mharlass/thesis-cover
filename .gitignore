@@ -8,28 +8,12 @@ uploads/
 # macOS
 .DS_Store
 
-# Build output (rebuilt by scripts/, and by .github/workflows/deploy-pages.yml)
+# Build output (rebuilt by Vite and by .github/workflows/deploy-pages.yml)
 _site/
-_site-shinylive/
-/thesis-cover.svg
-/thesis-cover.pdf
-/thesis-cover.png
-
-# R
-.Rhistory
-.RData
-.Rproj.user/
-renv/library/
-renv/local/
-renv/cellar/
-renv/lock/
-renv/python/
-renv/sandbox/
-renv/staging/
 
 # Scratch renders
 /scratch/
 
-# The static browser build
+# Browser dependencies
 web/node_modules/
 web/scratch/

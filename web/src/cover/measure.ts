@@ -1,10 +1,8 @@
 // How wide the type sets, and therefore whether the title fits.
 //
-// The R pipeline asks textshaping for this; here the browser's own shaper
-// answers, through a throwaway canvas. Both are measuring the same Inter faces
-// with the same features, so the answers agree to within a rounding error —
-// but the browser will only shape with Inter once the face has actually
-// loaded, so callers must await `fontsReady()` before trusting a width.
+// The browser's own shaper answers through a throwaway canvas. It will only
+// shape with Inter once the face has loaded, so callers must await
+// `fontsReady()` before trusting a width.
 
 import { coverDims } from "./geometry";
 import type { CoverParams } from "./params";

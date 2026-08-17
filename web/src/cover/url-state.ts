@@ -1,6 +1,4 @@
-// Carrying a parameter set in the page's query string. A port of
-// app/R/url_state.R, and deliberately wire-compatible with it: a link produced
-// by the R app restores here and vice versa.
+// Carrying a parameter set in the page's query string.
 //
 // The point is a link that can be pasted into an email, so only parameters
 // that differ from the defaults are written out and the encoding stays
@@ -13,7 +11,7 @@ import {
   coverParams,
 } from "./params";
 
-/** Format a value the way R's `as.character()` does, so links match. */
+/** Format a value compactly for a readable query string. */
 function encodeValue(value: unknown): string {
   const text = Array.isArray(value)
     ? value.map(String).join("|")

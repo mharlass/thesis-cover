@@ -1,10 +1,9 @@
 // Turning the sampled ridge into a smooth curve.
 //
-// cover_geometry() evaluates each line every 2 mm, and both the original
-// generator and the ggplot rewrite joined those samples with straight
-// segments. At print size the facets are visible on the shallow lines, so the
-// samples are interpolated with a uniform Catmull-Rom spline instead, written
-// out as cubic Béziers.
+// coverGeometry() evaluates each line every 2 mm. The original generator joined
+// those samples with straight segments. At print size the facets are visible
+// on shallow lines, so the samples are interpolated with a uniform Catmull-Rom
+// spline instead, written as cubic Béziers.
 //
 // The spline passes exactly through every sample, so the vertices the
 // regression fixtures pin are untouched: this changes what happens *between*

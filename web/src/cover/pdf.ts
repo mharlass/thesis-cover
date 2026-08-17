@@ -3,8 +3,7 @@
 // This module is imported dynamically, so nothing here is downloaded until
 // somebody actually asks for a PDF. That matters: pdf-lib and fontkit together
 // are larger than the rest of the application put together, and the whole
-// point of leaving WebAssembly behind was to stop making every visitor pay for
-// machinery they may never use.
+// goal is to avoid making every visitor pay for machinery they may never use.
 //
 // pdf-lib has no gradient API, so the four gradients are built as raw PDF
 // objects. That is not gold-plating — they carry the whole look of the cover,
@@ -17,8 +16,7 @@
 //   fold        the same, with an axial mask.
 //   edge fade   the whole ridge goes into a transparency group, and that group
 //               is drawn under a horizontal luminosity mask. This is exactly
-//               what the original SVG's <mask> did, and what ggplot could not
-//               do — see the note in scene.ts.
+//               what the original SVG's <mask> did; see the note in scene.ts.
 //
 // Everything is drawn in millimetres with y running down the page, matching
 // the rest of the pipeline, by way of a flipped base transform. Text has to

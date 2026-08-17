@@ -1,8 +1,7 @@
 // The cover generator.
 //
-// Everything it draws comes from src/cover/, which is a port of the R pipeline
-// in app/R/ and is held to it by web/test/geometry.test.ts. This file is only
-// the arrangement on the page.
+// Everything it draws comes from src/cover/ and is held to the frozen geometry
+// and legacy-cover fixtures by the test suite. This file only arranges the UI.
 
 import { useEffect } from "preact/hooks";
 

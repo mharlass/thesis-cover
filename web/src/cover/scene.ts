@@ -3,7 +3,7 @@
 // The app draws the same cover three ways — Canvas for the previews and the
 // PNG, SVG for the file the printer gets, PDF for the download — and the only
 // way to be sure the preview is telling the truth is for all three to walk one
-// description. That description is built here, straight from cover_geometry(),
+// description. That description is built here, straight from coverGeometry(),
 // and the emitters in svg.ts, canvas.ts and pdf.ts contain no layout decisions
 // of their own.
 //
@@ -92,8 +92,7 @@ const CONTOUR_SHADOW_ALPHA_RANGE = 0.12;
  *
  * SVG has feGaussianBlur and Canvas has ctx.filter, so both draw the real
  * thing. PDF has neither, and neither does Safari before 18.1, so those two
- * stack progressively wider and fainter copies of the same path instead —
- * the approximation the ggplot renderer used, and for the same reason. A
+ * stack progressively wider and fainter copies of the same path instead. A
  * single wide stroke will not do: it reads as a fat band rather than a glow.
  *
  * Multipliers are on the stratum's own width and on the alpha it would have
@@ -108,11 +107,9 @@ export const GLOW_HALOS: readonly { width: number; alpha: number }[] = [
 /**
  * Widths of the fade at each end of the wrap, as a fraction of the page.
  *
- * The original masked the whole ridge group with this ramp. The ggplot rewrite
- * could not mask a group — only fade each line's own opacity, which composites
- * brighter — so it painted flat background over the ends instead and accepted
- * an error of about 3/255. SVG, Canvas and PDF can all mask properly, so the
- * original behaviour is restored here.
+ * The original masked the whole ridge group with this ramp. Fading each line's
+ * own opacity composites brighter, so SVG, Canvas and PDF all mask the
+ * composited ridge instead.
  */
 const FADE_FRACTION = 0.06;
 

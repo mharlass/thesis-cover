@@ -1,9 +1,4 @@
-// The same checks tests/testthat/test-params.R and test-url-state.R apply.
-//
-// Query strings are the one thing the two implementations exchange directly: a
-// link produced by the R app has to restore here, and a link produced here has
-// to restore in the R app. That is why the encoding is asserted literally,
-// down to R's "TRUE" rather than JavaScript's "true".
+// Parameter validation and portable URL-state regression checks.
 
 import { describe, expect, it } from "vitest";
 
@@ -75,7 +70,7 @@ describe("URL state", () => {
     );
   });
 
-  it("spells booleans the way R does, so links interchange", () => {
+  it("uses stable uppercase booleans while accepting either case", () => {
     expect(coverQuery(coverParams({ show_guides: true }))).toBe("?show_guides=TRUE");
     expect(coverParamsFromQuery("?show_guides=TRUE").show_guides).toBe(true);
     expect(coverParamsFromQuery("?show_guides=true").show_guides).toBe(true);

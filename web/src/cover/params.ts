@@ -1,6 +1,4 @@
-// The single definition of every browser-cover parameter. The shared geometry
-// values port app/R/params.R; browser-only scene treatments are defined here
-// without changing the R artwork.
+// The single definition of every cover parameter.
 //
 // PARAM_SPEC is the one source of truth for four consumers: the defaults in
 // coverParams(), input validation, the control sidebar (built by iterating

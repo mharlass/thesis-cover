@@ -1,8 +1,8 @@
 // The sidebar, built by walking PARAM_SPEC.
 //
-// Same arrangement as the Shiny app it replaces: a preset selector, then one
-// collapsible section per group of parameters, then the editable text. Adding
-// a parameter still means adding one row to PARAM_SPEC and nothing here.
+// A preset selector, one collapsible section per parameter group, then the
+// editable text. Adding a parameter still means adding one row to PARAM_SPEC
+// and nothing here.
 
 import { useState } from "preact/hooks";
 

@@ -1,100 +1,88 @@
 # Thesis cover
 
-**▶ Open the generator: <https://mharlass.github.io/thesis-cover/>**
+**[Open the generator](https://mharlass.github.io/thesis-cover/)**
 
-No installation, no account, nothing to run locally. The page draws the cover
-in your browser and opens more or less instantly — about 120 kB on a first
-visit, most of which is the two font faces.
+A fast, static TypeScript application for designing a PhD thesis cover wrap:
+back, spine, and front on one sheet. The artwork is cohort-ridge line art
+after Supplementary Figure 3 of the thesis, with one line per simulated birth
+cohort and highlighted risk strata.
 
-A generator for a PhD thesis cover wrap — back, spine and front on one sheet.
-The artwork is "cohort ridge" line art after Suppl. Fig. 3 of the thesis: one
-line per simulated birth cohort, with a few highlighted risk strata drawn over
-the top.
+For users, everything runs in the browser. There is no account, server, or
+runtime to install. Settings update the previews immediately and are written
+to the URL, so a design can be shared as a link.
 
-Move the sliders, set the title, download the result. The address bar tracks
-the current settings, so a cover you like is just a link you can send to
-someone. **Save current** also stores a named preset in this browser, ready to
-restore on a later visit. Saved presets stay in that browser profile; sharing
-still works through the URL rather than through the local preset name.
+Use **Save current** to store a named preset in the current browser profile.
+Saved presets remain local to that browser. Use the URL when a preset needs to
+be shared or opened elsewhere.
 
-The built-in **Contour relief** preset shows the optional depth treatment. It
-adds a restrained dark low edge beneath each line, making the ridge read more
-like a mountain seen from the side without changing the underlying profile.
-The **Contour depth** slider ranges from the unchanged original at 0 to the
-strongest relief at 1.
+The built-in **Contour relief** preset demonstrates the optional depth
+treatment. It adds a restrained dark lower edge beneath each cohort line so
+the ridge resembles mountain contours viewed from the side. The **Contour
+depth** control ranges from the original appearance at 0 to the strongest
+relief at 1.
 
 ## Downloads
 
-| Format | For |
+| Format | Intended use |
 | --- | --- |
-| **SVG** | the printer. Vector, live text, references both Inter faces as web fonts. |
-| **PDF** | vector, with both Inter faces embedded. |
-| **PNG** | 300 dpi, for a quick look or a slide. |
+| **SVG** | Editable vector artwork for the printer, with live text and both Inter faces referenced as web fonts. |
+| **PDF** | Portable vector artwork with both Inter faces embedded. |
+| **PNG** | A 300 dpi raster preview for review or presentation slides. |
 
-Trim 170 × 240 mm, 3 mm bleed, 12 mm spine, so the full wrap is 358 × 246 mm.
-The spine is a placeholder: the real width comes from the printer's page-count
-calculation, and changing it shifts the whole front panel, so re-render and
-look afterwards.
+The default full wrap is 358 × 246 mm: two 170 × 240 mm panels, 3 mm bleed,
+and a 12 mm spine. The spine width is a placeholder. Set the final width from
+the printer's page-count calculation and inspect the resulting layout before
+handoff.
 
-## Running it yourself
+## Development
 
-Two implementations, for two different jobs.
-
-**The site** is a static TypeScript build with no framework beyond Preact.
+The application lives in `web/` and uses TypeScript, Preact, Canvas 2D, SVG,
+and PDF emitters.
 
 ```sh
 cd web
 npm install
-npm run dev            # local dev server
-npm test               # geometry parity plus browser scene and UI tests
-npm run build          # static site into _site/
+npm run dev
+npm test
+npm run build
 ```
 
-**The R pipeline** defines the shared ridge geometry and provides its own
-command-line renderer. Dependencies are managed with `renv`.
+`npm run build` writes the static site to the repository-root `../_site/`. To
+compare the Canvas, SVG, and PDF renderers locally, install Chromium for
+Playwright plus `pdftocairo` and `uv`, then run:
 
 ```sh
-Rscript -e 'renv::restore()'                           # once, after cloning
-
-Rscript scripts/generate_cover.R                       # writes thesis-cover.svg
-Rscript scripts/generate_cover.R --preset candidate_v31 --out cover.pdf
-Rscript scripts/generate_cover.R --seed 7 --view front --out front.png
-Rscript -e 'shiny::runApp("app")'                      # the R app, locally
-Rscript -e 'testthat::test_dir("tests/testthat")'      # the tests
+cd web
+npx playwright install chromium
+node scripts/render_samples.mjs
 ```
 
-Every shared geometry parameter can be passed to the command line as
-`--name value`. The output format follows the file extension. Browser-only
-features such as **Contour depth** and locally saved presets are not part of
-the R command-line implementation.
+The comparison script writes sample images and reports pixel differences. Its
+output still needs visual inspection because the PDF intentionally approximates
+the SVG glow.
 
-The shared geometry is held together rather than trusted to agree: the browser
-build is tested against a fixture dumped from R, and both implementations are
-tested against the same two checked-in covers, vertex by vertex. Browser-only
-scene treatments are applied after that geometry step and are tested across
-Canvas, SVG and PDF instead. URLs remain complete for the browser site; the R
-app restores their shared settings but has no contour-relief counterpart.
+## Architecture
 
-The site used to be the R app compiled to WebAssembly, which worked but cost a
-76 MB download and half a minute of waiting before it could draw anything.
-[`AGENTS.md`](AGENTS.md) has the measurements and the reasoning.
+`coverParams()` validates settings, `coverGeometry()` produces the sampled
+ridge, and `buildScene()` creates one renderer-independent description of the
+artwork. The Canvas preview, SVG download, and PDF download all consume that
+scene. Regression fixtures preserve the established geometry, including
+random-number stream order and the two checked-in legacy covers.
 
-## Contributing
+PNG export rasterizes the same inline SVG used by the vector exporter. The PDF
+implementation and fonts are loaded only when requested, keeping the initial
+site download small.
 
-[`AGENTS.md`](AGENTS.md) is the guide to the internals — the pipeline, the
-pseudo-random number contract that makes covers reproducible, the boundary
-between shared geometry and browser-only scene features, the print
-conventions, and a list of traps that have already caught somebody. Worth
-reading before changing anything that draws.
+[`AGENTS.md`](AGENTS.md) documents the architecture, reproducibility contract,
+print conventions, and verification workflow in detail.
 
-Deployment is automatic: pushing to `main` runs both test suites and rebuilds
-the site.
+## Deployment
+
+Pushing to `main` runs the TypeScript tests, builds `_site/`, and deploys that
+artifact with GitHub Actions. GitHub Pages is configured to use the workflow
+artifact rather than a branch directory.
 
 ## Licence
 
-The cover is set in [Inter](https://rsms.me/inter/) by Rasmus Andersson, used
-under the SIL Open Font License 1.1. The full faces are vendored under
-`app/www/fonts/` with the licence alongside, and `scripts/subset_fonts.sh`
-cuts them down to the Latin subset the site ships. Do not install them into
-your system font library to "fix" a font warning — it breaks the R build in a
-way `AGENTS.md` explains.
+The cover uses [Inter](https://rsms.me/inter/) by Rasmus Andersson under the SIL
+Open Font License 1.1. The browser subsets and licence are included in `web/`.

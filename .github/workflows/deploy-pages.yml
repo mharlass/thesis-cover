@@ -1,4 +1,4 @@
-name: Test and deploy
+name: Test and deploy TypeScript site
 
 on:
   push:
@@ -12,14 +12,11 @@ permissions:
   pages: write
   id-token: write
 
-# A queued deploy should wait for the running one rather than cancel it.
 concurrency:
   group: pages
   cancel-in-progress: false
 
 jobs:
-  # The published site is the static build under web/. It needs no R at all,
-  # which is what took a cold visit from ~76 MB to about 120 kB.
   site:
     runs-on: ubuntu-latest
     defaults:
@@ -34,17 +31,15 @@ jobs:
           cache: npm
           cache-dependency-path: web/package-lock.json
 
-      # playwright is a devDependency for web/scripts/render_samples.mjs, which
-      # is a local tool and is not run here. Nothing in CI needs a browser, so
-      # skip the ~100 MB download.
+      # Playwright is used by the local visual-comparison script, not CI.
       - run: npm ci
         env:
           PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: "1"
 
-      - name: Run the browser build's tests
+      - name: Run tests
         run: npm test
 
-      - name: Build the site
+      - name: Build static site
         run: npm run build
 
       - uses: actions/upload-pages-artifact@v3
@@ -52,38 +47,8 @@ jobs:
         with:
           path: _site
 
-  # app/R/ is still the definition of the shared ridge geometry. The browser
-  # build is held to a fixture dumped from it and to the same checked-in SVGs;
-  # browser-only scene treatments are covered by the site job above. These R
-  # tests stop the shared definition moving unnoticed, so they gate the deploy
-  # even though nothing they touch is published.
-  r-pipeline:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: r-lib/actions/setup-r@v2
-        with:
-          use-public-rspm: true
-
-      - uses: r-lib/actions/setup-renv@v2
-
-      - name: Run the tests
-        run: Rscript -e 'testthat::test_dir("tests/testthat", stop_on_failure = TRUE)'
-
-      - name: Render the cover from the command line
-        run: Rscript scripts/generate_cover.R --out thesis-cover.svg
-
-      # If this leaves the working tree dirty, the R pipeline has changed and
-      # the fixture the TypeScript port is tested against is now stale.
-      - name: Check the geometry fixture is current
-        run: |
-          Rscript scripts/dump_geometry_fixture.R
-          git diff --exit-code -- web/test/fixtures/r-geometry.json \
-            || { echo "::error::web/test/fixtures/r-geometry.json is out of date. Run Rscript scripts/dump_geometry_fixture.R and commit the result."; exit 1; }
-
   deploy:
-    needs: [site, r-pipeline]
+    needs: site
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     environment:

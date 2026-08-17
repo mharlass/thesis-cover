@@ -1,11 +1,6 @@
-// The same gate tests/testthat/test-geometry-legacy.R applies, applied to the
-// TypeScript port.
-//
-// The base-R generator these two covers came from wrote every vertex into the
-// SVG at two decimal places. Reproducing those coordinates is what guarantees
-// that moving the drawing into the browser changed the rendering and nothing
-// else. Both implementations are held to the same files, so neither can drift
-// without the other noticing.
+// The original generator wrote every vertex into these two SVGs at two decimal
+// places. Reproducing those coordinates protects the established geometry while
+// the browser emitters improve how the samples are rendered between vertices.
 
 import { existsSync, readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";

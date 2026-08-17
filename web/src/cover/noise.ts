@@ -1,12 +1,11 @@
 // Deterministic pseudo-randomness for the cohort ridge.
 //
-// A direct port of app/R/noise.R. Reproducibility of the artwork rests
-// entirely on this file, and on the *order* in which the stream is consumed:
+// Reproducibility of the artwork rests entirely on this file and on the
+// *order* in which the stream is consumed:
 // every lattice takes a variable number of draws, so inserting one anywhere
 // shifts everything after it. The multiplier/modulus pair is the classic
 // MINSTD, chosen because every intermediate product stays exactly
-// representable in a double — which is as true of JavaScript numbers as it is
-// of R's, so the two implementations agree bit for bit.
+// representable in a JavaScript double.
 
 const LCG_MULTIPLIER = 16807;
 const LCG_MODULUS = 2147483647;
@@ -20,8 +19,8 @@ const LCG_MODULUS = 2147483647;
  */
 export function lcgStream(seed: number, n: number): Float64Array {
   if (n < 1) return new Float64Array(0);
-  // R's %% returns a non-negative result for a positive modulus; JavaScript's
-  // % keeps the sign of the dividend, so a negative seed needs correcting.
+  // JavaScript's % keeps the sign of the dividend, so a negative seed needs
+  // correcting to obtain a mathematical modulus.
   const wrapped = Math.floor(seed) % (LCG_MODULUS - 1);
   let state = (wrapped < 0 ? wrapped + LCG_MODULUS - 1 : wrapped) + 1;
 

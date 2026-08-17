@@ -1,4 +1,4 @@
-// Geometry of the cover. A port of app/R/geometry.R. Nothing here draws.
+// Geometry of the cover. Nothing here draws.
 //
 // All units are millimetres in SVG orientation: x runs left to right across
 // the wrap (back | spine | front) and y runs top to bottom.
@@ -44,13 +44,10 @@ export interface CoverTextItem {
   /**
    * Extra advance after each glyph, in mm.
    *
-   * The original generator set this on every run of type and the ggplot
-   * rewrite had to drop it, because ggplot has no tracking control — which is
-   * why AGENTS.md lists tighter type as a known difference. SVG, Canvas and
-   * PDF can all express it, so the original values are carried here and the
-   * type sets as it was designed to. The R pipeline has no matching field;
-   * the parity fixture checks the other seven, which are the ones that place
-   * the text.
+   * The original generator set this on every run of type. SVG, Canvas and PDF
+   * can all express it, so those values are carried here and the type sets as
+   * designed. The geometry fixture checks the remaining fields that position
+   * each text item.
    */
   tracking: number;
 }
@@ -83,7 +80,7 @@ export function coverDims(spineMm: number): CoverDims {
   };
 }
 
-/** The x positions the ridge is sampled at, matching R's `seq(0, width, 2)`. */
+/** The x positions the ridge is sampled at, including the right edge. */
 function sampleX(width: number, step: number): Float64Array {
   const n = Math.floor(width / step) + 1;
   const extra = (n - 1) * step < width ? 1 : 0;
@@ -95,9 +92,8 @@ function sampleX(width: number, step: number): Float64Array {
 
 export interface GeometryOptions {
   /**
-   * Sampling interval along the wrap, in mm. Defaults to the 2 mm grid the R
-   * pipeline and the original generator both used, which is what the
-   * regression fixtures pin.
+   * Sampling interval along the wrap, in mm. Defaults to the established 2 mm
+   * grid pinned by the regression fixtures.
    *
    * Every lattice is sized from the page width alone, so refining this draws
    * more samples from the same random stream rather than a different one: the
