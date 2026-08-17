@@ -1,3 +1,5 @@
+library(testthat)
+
 app_dir <- normalizePath(file.path("..", "..", "app"), mustWork = TRUE)
 repo_dir <- dirname(app_dir)
 
