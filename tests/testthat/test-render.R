@@ -81,8 +81,14 @@ test_that("PNG and PDF devices both produce a file", {
   expect_gt(file.size(pdf), 1000)
 })
 
-test_that("an unsupported extension is refused by name", {
-  expect_error(cover_save(cover_params(), "cover.jpeg"), 'must end in .svg, .pdf or .png')
+test_that("an unsupported format is refused by name", {
+  expect_error(cover_save(cover_params(), "cover.jpeg"), '`format` must be svg, pdf or png, not "jpeg"')
+})
+
+test_that("format can be given explicitly, as Shiny downloads need", {
+  file <- withr::local_tempfile()
+  cover_save(cover_params(lines = 8), file, format = "svg")
+  expect_match(readLines(file, n = 2)[2], "<svg")
 })
 
 test_that("guides are drawn only when asked for", {

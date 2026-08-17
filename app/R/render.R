@@ -237,20 +237,24 @@ title_overflow <- function(params) {
 #' Render a cover to a file.
 #'
 #' @param params A parameter set from [cover_params()].
-#' @param path Output path; the extension picks the device (`.svg`, `.pdf` or
-#'   `.png`).
+#' @param path Output path.
 #' @param view `"wrap"` or `"front"`, as in [cover_ggplot()].
 #' @param dpi Resolution for PNG output.
+#' @param format `"svg"`, `"pdf"` or `"png"`. Taken from `path` by default,
+#'   but Shiny hands download handlers a temporary path with no useful
+#'   extension, so it can be given explicitly.
 #' @returns `path`, invisibly.
-cover_save <- function(params, path, view = "wrap", dpi = 300) {
+cover_save <- function(params, path, view = "wrap", dpi = 300,
+                       format = str_to_lower(str_extract(path, "[^.]+$"))) {
   geometry <- cover_geometry(params)
   size <- view_size(geometry$dims, view)
-  extension <- str_to_lower(str_extract(path, "[^.]+$"))
 
-  switch(extension,
+  switch(format,
+    # svglite::font_face is named explicitly because bslib, which the app
+    # attaches, exports a font_face() of its own and would mask it.
     svg = svglite(path,
       width = size$width / 25.4, height = size$height / 25.4,
-      bg = NOCTURNE[["bg"]], web_fonts = list(font_face("Inter", INTER_WOFF2))
+      bg = NOCTURNE[["bg"]], web_fonts = list(svglite::font_face("Inter", INTER_WOFF2))
     ),
     pdf = open_pdf(path, size$width / 25.4, size$height / 25.4),
     png = agg_png(path,
@@ -258,7 +262,7 @@ cover_save <- function(params, path, view = "wrap", dpi = 300) {
       res = dpi, background = NOCTURNE[["bg"]]
     ),
     stop(
-      "`path` must end in .svg, .pdf or .png, not \".", extension, "\".",
+      "`format` must be svg, pdf or png, not \"", format, "\".",
       call. = FALSE
     )
   )

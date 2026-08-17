@@ -30,6 +30,9 @@ PARAM_SPEC <- tribble(
 
 PARAM_SECTIONS <- c("Print", "Type", "Line art", "Strata")
 
+# How many title lines the app offers to edit. Blank ones are dropped.
+TITLE_LINES <- 5
+
 #' Named presets covering the looks worth returning to.
 #'
 #' `candidate_v31` reproduces `candidates/thesis-cover_v3.1.svg` exactly. That
