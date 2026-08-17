@@ -1,0 +1,302 @@
+/* The interface, in the same Nocturne tokens the cover is drawn from.
+ *
+ * Hand-written rather than a framework: the whole point of this rewrite was
+ * that a first visit should cost tens of kilobytes, and Bootstrap alone is
+ * more CSS than the entire application. Inter is served from the subset
+ * vendored under public/fonts, so the page makes no third-party request. */
+
+@font-face {
+  font-family: "Inter";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("./fonts/Inter-Regular.subset.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Inter";
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url("./fonts/Inter-Medium.subset.woff2") format("woff2");
+}
+
+:root {
+  --bg: #161826;
+  --surface: #232532;
+  --text: #e9e9ed;
+  --accent: #9184d9;
+  --n300: #cfd3e5;
+  --n500: #9397ab;
+  --n700: #595d6c;
+  --n800: #3f424d;
+  --a900: #2b2741;
+  --radius: 14px;
+
+  color-scheme: dark;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  padding: 1.5rem;
+  background: var(--bg);
+  color: var(--text);
+  font-family: "Inter", system-ui, sans-serif;
+  font-size: 15px;
+  line-height: 1.5;
+}
+
+h1 {
+  margin: 0;
+  font-size: 1.35rem;
+  font-weight: 500;
+}
+
+h2 {
+  margin: 0 0 0.85rem;
+  font-size: 0.95rem;
+  font-weight: 500;
+}
+
+header {
+  display: flex;
+  align-items: baseline;
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+}
+
+.subtitle {
+  margin: 0;
+  color: var(--n500);
+  font-size: 0.9rem;
+}
+
+.layout {
+  display: grid;
+  grid-template-columns: 320px minmax(0, 1fr);
+  gap: 1.25rem;
+  align-items: start;
+}
+
+main {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  min-width: 0;
+}
+
+.row {
+  display: grid;
+  grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+  gap: 1.25rem;
+  align-items: start;
+}
+
+.panel {
+  background: var(--surface);
+  border: 1px solid var(--n800);
+  border-radius: var(--radius);
+  padding: 1rem;
+}
+
+.preview {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 6px;
+}
+
+/* --- sidebar ------------------------------------------------------------- */
+
+.sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  background: var(--surface);
+  border: 1px solid var(--n800);
+  border-radius: var(--radius);
+  padding: 1rem;
+  position: sticky;
+  top: 1rem;
+  max-height: calc(100vh - 2rem);
+  overflow-y: auto;
+}
+
+details {
+  border-top: 1px solid var(--n800);
+}
+
+summary {
+  padding: 0.6rem 0;
+  font-weight: 500;
+  cursor: pointer;
+  list-style: none;
+}
+
+summary::-webkit-details-marker {
+  display: none;
+}
+
+summary::before {
+  content: "▸";
+  display: inline-block;
+  width: 1.1em;
+  color: var(--n500);
+  transition: transform 0.15s;
+}
+
+details[open] > summary::before {
+  transform: rotate(90deg);
+}
+
+.section-body {
+  padding: 0.25rem 0 0.85rem;
+}
+
+.field {
+  margin-bottom: 1rem;
+}
+
+.field label {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-bottom: 0.4rem;
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+.value {
+  color: var(--n500);
+  font-weight: 400;
+  font-variant-numeric: tabular-nums;
+}
+
+.field-check {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.field-check label {
+  margin: 0;
+  font-size: 0.85rem;
+}
+
+input[type="range"] {
+  width: 100%;
+  accent-color: var(--accent);
+}
+
+select,
+.text-input {
+  width: 100%;
+  padding: 0.45rem 0.6rem;
+  background: var(--bg);
+  color: var(--text);
+  border: 1px solid var(--n700);
+  border-radius: 8px;
+  font: inherit;
+  font-size: 0.85rem;
+}
+
+.text-input {
+  margin-bottom: 0.4rem;
+}
+
+select:focus-visible,
+.text-input:focus-visible,
+button:focus-visible,
+input:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+/* --- downloads ----------------------------------------------------------- */
+
+.buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+button {
+  padding: 0.55rem 0.9rem;
+  border-radius: 8px;
+  border: 1px solid var(--n700);
+  background: transparent;
+  color: var(--n300);
+  font: inherit;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+button:hover:not(:disabled) {
+  color: var(--text);
+  border-color: var(--accent);
+  background: var(--a900);
+}
+
+button.primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #14121f;
+  font-weight: 500;
+}
+
+button:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.warning {
+  margin: 0 0 0.85rem;
+  padding: 0.6rem 0.75rem;
+  border-radius: 8px;
+  border: 1px solid #6b5a2a;
+  background: #2b2718;
+  color: #e7d9a8;
+  font-size: 0.85rem;
+}
+
+.spec {
+  margin: 1rem 0 0;
+  border-top: 1px solid var(--n800);
+}
+
+.spec div {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.4rem 0;
+  border-bottom: 1px solid var(--n800);
+  font-size: 0.85rem;
+}
+
+.spec dt {
+  margin: 0;
+  color: var(--n500);
+}
+
+.spec dd {
+  margin: 0;
+  font-variant-numeric: tabular-nums;
+}
+
+/* --- narrow windows ------------------------------------------------------ */
+
+@media (max-width: 1100px) {
+  .layout,
+  .row {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .sidebar {
+    position: static;
+    max-height: none;
+  }
+}
