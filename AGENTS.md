@@ -68,12 +68,37 @@ The cover is set in Inter, which is neither installed in webR nor guaranteed on 
 
 `TEXT_BASELINE_RATIO` in `render.R` bridges SVG's baseline positioning and ggplot's bounding-box centring. It is **measured, not derived** — `test-render.R` renders text and checks the emitted baselines land within 0.1 mm of what `cover_text()` asked for, so the constant cannot drift unnoticed.
 
+## Startup cost
+
+The published app is slow to open — about 30 s on a cold visit — and the reason is worth knowing before anyone tries to optimise the R.
+
+Nothing is generated ahead of time and there is no data payload: the artwork comes from a seed and the only assets are the two Inter faces. What the browser downloads is *code*. Measured over a static server, one cold load pulls **76 MB** and reaches its first drawn frame in about 10 s on localhost, 30–40 s over the network:
+
+| | size | ours? |
+| --- | --- | --- |
+| `R.wasm`, `library.data.gz`, loader, translations | ~41 MB | no — this is webR |
+| CRAN packages, unpacked into the virtual filesystem | 33.5 MB | yes |
+| `app.json` (code and the two fonts) | 1.1 MB | marginal |
+
+Of the packages, roughly 15 MB is `svglite` and its font-shaping chain, 11 MB is ggplot2 and its dependencies, 4 MB the dplyr/tibble/purrr stack, and the rest the export devices and viridis.
+
+Three things follow.
+
+- **`stringi` (13.4 MB) cannot be removed.** It is easy to assume it arrives with `stringr` and to go rewriting string calls to shed it. It does not: the chain is `svglite → textshaping → stringi`, and `svglite` is what emits the live-text SVG the printer needs. `ragg` pulls the same chain. The app avoids `stringr` anyway — base R and `glue`, which webR already ships with Shiny, cover what it needs — but that saves `stringr`'s own 0.3 MB, not `stringi`.
+- **Nothing caches between visits.** GitHub Pages serves everything with `max-age=600` and offers no way to change it, and webR reinstalls every package into a fresh virtual filesystem on each page load. A reload is faster than a cold visit (≈22 s against ≈42 s measured) but still pays for the whole download and the whole install.
+- **Attaching a package you do not use is not free**, and it costs twice: the download, then the unpack and attach inside wasm. Removing the unused `tidyr` and `stringr` took first paint from 12.7 s to 10.2 s on localhost for only 1.2 MB, because the install step dominates. Keep `00-setup.R` to what is used, and check `_site/shinylive/webr/packages/` after a build to see what actually shipped.
+
+The floor, given webR plus the SVG and font machinery, is around 56 MB. Getting materially below today's figure means dropping ggplot2 for raw grid, which is an architecture change, not a tidy-up.
+
 ## Gotchas
 
 - **`bslib::font_face` masks `svglite::font_face`.** `cover_save()` names the svglite one explicitly. Without that, SVG download breaks inside the app while the CLI keeps working.
 - **shinylive bundles what is installed locally.** `shinylive::export()` inspects the local library to decide what to ship; a package missing locally is *warned about and silently omitted*, and only fails once the page runs in a browser. After changing dependencies, check the build log for "no package called".
 - **`args[c(TRUE, FALSE)]` on an empty vector returns `NA`**, not an empty vector. The CLI argument parser indexes with `seq()` for that reason.
 - **`testServer()` does not evaluate the UI**, so inputs start `NULL` and tests must set them. It also cannot observe `update*Input()` round trips, so preset and URL restore are tested at the function level instead.
+- **`plotOutput()` is 400 px tall unless something overrides it.** Both previews size themselves by aspect ratio from the server, so they need `height = "auto"` and the `.shiny-plot-output` rules in `app.R`. Without them the page still looks plausible and simply crops the cover — the ridge lives in the lower half, so what you get is an empty dark rectangle with a title on it.
+- **bslib maps `$light` onto a dark shade under a dark theme**, which leaves `btn-outline-light` invisible. The secondary download buttons carry `.btn-cover` and are coloured from the Nocturne tokens instead.
+- **`layout_columns()` wraps each card in its own stretched grid item.** Putting `align-self` on the card does nothing; a card that should keep its natural height opts out with `flex: 0 0 auto`.
 
 ## Print conventions
 
