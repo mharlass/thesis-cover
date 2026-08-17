@@ -10,6 +10,7 @@ uploads/
 
 # Build output (rebuilt by scripts/, and by .github/workflows/deploy-pages.yml)
 _site/
+_site-shinylive/
 /thesis-cover.svg
 /thesis-cover.pdf
 /thesis-cover.png
@@ -28,3 +29,7 @@ renv/staging/
 
 # Scratch renders
 /scratch/
+
+# The static browser build
+web/node_modules/
+web/scratch/

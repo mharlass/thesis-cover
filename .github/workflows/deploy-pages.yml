@@ -18,7 +18,45 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  build:
+  # The published site is the static build under web/. It needs no R at all,
+  # which is what took a cold visit from ~76 MB to about 120 kB.
+  site:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: web
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+
+      # playwright is a devDependency for web/scripts/render_samples.mjs, which
+      # is a local tool and is not run here. Nothing in CI needs a browser, so
+      # skip the ~100 MB download.
+      - run: npm ci
+        env:
+          PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: "1"
+
+      - name: Run the browser build's tests
+        run: npm test
+
+      - name: Build the site
+        run: npm run build
+
+      - uses: actions/upload-pages-artifact@v3
+        if: github.ref == 'refs/heads/main'
+        with:
+          path: _site
+
+  # app/R/ is still the definition of the artwork: the browser build is a port
+  # of it, held to a fixture dumped from it and to the same checked-in SVGs.
+  # These tests are what stop the definition moving without anyone noticing, so
+  # they gate the deploy even though nothing they touch is published.
+  r-pipeline:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -27,27 +65,24 @@ jobs:
         with:
           use-public-rspm: true
 
-      # shinylive reads the locally installed packages to decide what to put
-      # in the WebAssembly bundle, so the full runtime has to be restored
-      # here, not just shinylive itself.
       - uses: r-lib/actions/setup-renv@v2
 
-      - name: Run tests
+      - name: Run the tests
         run: Rscript -e 'testthat::test_dir("tests/testthat", stop_on_failure = TRUE)'
 
       - name: Render the cover from the command line
         run: Rscript scripts/generate_cover.R --out thesis-cover.svg
 
-      - name: Build the WebAssembly site
-        run: Rscript scripts/build_site.R _site
-
-      - uses: actions/upload-pages-artifact@v3
-        if: github.ref == 'refs/heads/main'
-        with:
-          path: _site
+      # If this leaves the working tree dirty, the R pipeline has changed and
+      # the fixture the TypeScript port is tested against is now stale.
+      - name: Check the geometry fixture is current
+        run: |
+          Rscript scripts/dump_geometry_fixture.R
+          git diff --exit-code -- web/test/fixtures/r-geometry.json \
+            || { echo "::error::web/test/fixtures/r-geometry.json is out of date. Run Rscript scripts/dump_geometry_fixture.R and commit the result."; exit 1; }
 
   deploy:
-    needs: build
+    needs: [site, r-pipeline]
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     environment:
