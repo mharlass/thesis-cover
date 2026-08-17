@@ -29,6 +29,7 @@ const PORT = 5199;
 const cases = [
   { name: "default", params: {}, preset: "default" },
   { name: "candidate_v31", params: {}, preset: "candidate_v31" },
+  { name: "relief", params: {}, preset: "relief" },
   { name: "guides", params: { show_guides: true }, preset: "default" },
 ];
 

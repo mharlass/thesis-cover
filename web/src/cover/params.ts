@@ -1,4 +1,6 @@
-// The single definition of every cover parameter. A port of app/R/params.R.
+// The single definition of every browser-cover parameter. The shared geometry
+// values port app/R/params.R; browser-only scene treatments are defined here
+// without changing the R artwork.
 //
 // PARAM_SPEC is the one source of truth for four consumers: the defaults in
 // coverParams(), input validation, the control sidebar (built by iterating
@@ -31,6 +33,7 @@ export interface CoverParams {
   dispersion: number;
   weave: number;
   line_alpha: number;
+  contour_depth: number;
   seed: number;
   strata: number;
   palette: StrataPalette;
@@ -49,6 +52,7 @@ export const PARAM_SPEC: readonly ParamSpec[] = [
   { name: "dispersion", label: "Dispersion", section: "Line art", editor: "range", lower: 0, upper: 4, step: 0.1 },
   { name: "weave", label: "Weave", section: "Line art", editor: "range", lower: 0, upper: 1, step: 0.05 },
   { name: "line_alpha", label: "Line opacity", section: "Line art", editor: "range", lower: 0.05, upper: 1, step: 0.05 },
+  { name: "contour_depth", label: "Contour depth", section: "Line art", editor: "range", lower: 0, upper: 1, step: 0.05 },
   { name: "seed", label: "Seed", section: "Line art", editor: "int", lower: 0, upper: 99999, step: 1 },
   { name: "strata", label: "Strata lines", section: "Strata", editor: "range", lower: 0, upper: 6, step: 1 },
   { name: "palette", label: "Strata palette", section: "Strata", editor: "enum" },
@@ -78,6 +82,7 @@ export const DEFAULT_PARAMS: CoverParams = {
   dispersion: 1,
   weave: 0,
   line_alpha: 0.9,
+  contour_depth: 0,
   seed: 42,
   strata: 3,
   palette: "accent",
@@ -110,6 +115,7 @@ export const PRESETS: Record<string, Partial<CoverParams>> = {
     strata_jitter: 0.25,
   },
   sparse: { lines: 24, dispersion: 0.6, line_alpha: 1, strata: 2, strata_width: 0.8 },
+  relief: { contour_depth: 0.9 },
   woven: {
     lines: 160,
     weave: 0.55,
@@ -125,6 +131,7 @@ export const PRESET_LABELS: Record<string, string> = {
   default: "Default (v3)",
   candidate_v31: "Candidate v3.1",
   sparse: "Sparse",
+  relief: "Contour relief",
   woven: "Woven",
 };
 

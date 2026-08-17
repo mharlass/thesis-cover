@@ -31,6 +31,8 @@ export interface RidgeStroke {
   alpha: number;
   /** Gaussian standard deviation in mm; 0 for a crisp line. */
   blur: number;
+  /** Down-page offset in mm; positive values form the contour relief shadow. */
+  offsetY: number;
   /** Which of the original generator's two named groups this belongs to. */
   layer: "cohort" | "strata";
 }
@@ -77,6 +79,14 @@ export const GLOW_BLUR = 1.1;
 /** Opacity of that blurred copy. */
 export const GLOW_ALPHA = 0.6;
 
+/** The restrained low edge that makes each path read as a raised contour. */
+export const CONTOUR_SHADOW_COLOUR = "#0e101a";
+const CONTOUR_SHADOW_MIN_OFFSET = 0.75;
+const CONTOUR_SHADOW_OFFSET_RANGE = 0.55;
+const CONTOUR_SHADOW_WIDTH = 0.28;
+const CONTOUR_SHADOW_ALPHA = 0.38;
+const CONTOUR_SHADOW_ALPHA_RANGE = 0.12;
+
 /**
  * Stand-in for that blur where there is no blur to be had.
  *
@@ -120,30 +130,58 @@ export function buildScene(geometry: CoverGeometry, view: View): CoverScene {
       ? { x: dims.frontX, y: BLEED, width: dims.trimWidth, height: dims.trimHeight }
       : { x: 0, y: 0, width: dims.width, height: dims.height };
 
-  // Cohort lines first, then each stratum's blurred copy followed by the crisp
-  // one, which is the order the original generator emitted.
+  // A small, downward dark edge turns the stack into shallow relief without
+  // changing any path. Lower contours carry a little more depth, as though
+  // the mountain were lit from above. At zero this layer is absent and the
+  // legacy cover is unchanged.
   const ridge: RidgeStroke[] = [];
+  const reliefStroke = (
+    line: CoverGeometry["lines"][number],
+    layer: RidgeStroke["layer"],
+  ): RidgeStroke => {
+    const rank = line.lineId / (geometry.lines.length - 1);
+    return {
+      ys: line.ys,
+      colour: CONTOUR_SHADOW_COLOUR,
+      width: line.linewidth + CONTOUR_SHADOW_WIDTH * params.contour_depth,
+      alpha:
+        line.alpha *
+        params.contour_depth *
+        (CONTOUR_SHADOW_ALPHA + CONTOUR_SHADOW_ALPHA_RANGE * (1 - rank)),
+      blur: 0,
+      offsetY:
+        params.contour_depth *
+        (CONTOUR_SHADOW_MIN_OFFSET + CONTOUR_SHADOW_OFFSET_RANGE * (1 - rank)),
+      layer,
+    };
+  };
+
+  // Cohort lines next, then each stratum's blurred copy followed by the crisp
+  // one, which is the order the original generator emitted.
   for (const line of geometry.lines) {
     if (line.isStrata) continue;
+    if (params.contour_depth > 0) ridge.push(reliefStroke(line, "cohort"));
     ridge.push({
       ys: line.ys,
       colour: line.colour,
       width: line.linewidth,
       alpha: line.alpha,
       blur: 0,
+      offsetY: 0,
       layer: "cohort",
     });
   }
   for (const line of geometry.lines) {
     if (!line.isStrata) continue;
+    if (params.contour_depth > 0) ridge.push(reliefStroke(line, "strata"));
     const base = {
       ys: line.ys,
       colour: line.colour,
       width: line.linewidth,
       layer: "strata" as const,
     };
-    ridge.push({ ...base, alpha: line.alpha * GLOW_ALPHA, blur: GLOW_BLUR });
-    ridge.push({ ...base, alpha: line.alpha, blur: 0 });
+    ridge.push({ ...base, alpha: line.alpha * GLOW_ALPHA, blur: GLOW_BLUR, offsetY: 0 });
+    ridge.push({ ...base, alpha: line.alpha, blur: 0, offsetY: 0 });
   }
 
   const texts: SceneText[] = geometry.text.map((item) => ({

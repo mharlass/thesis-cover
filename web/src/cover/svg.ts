@@ -116,6 +116,7 @@ export function sceneToSvg(scene: CoverScene, options: SvgOptions = {}): string 
     const attrs =
       `<path d="${d}" fill="none" stroke="${stroke.colour}" ` +
       `stroke-width="${num(stroke.width)}"` +
+      (stroke.offsetY === 0 ? "" : ` transform="translate(0 ${num(stroke.offsetY)})"`) +
       (stroke.blur > 0 ? ` filter="url(#glow)"` : "") +
       (stroke.alpha === 1 ? "" : ` opacity="${num(stroke.alpha, 4)}"`) +
       "/>";

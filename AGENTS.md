@@ -8,15 +8,15 @@ A generator for a PhD thesis cover wrap (back · spine · front). The artwork is
 
 There are two implementations, and the split matters:
 
-- **`app/R/` is the definition of the artwork.** A tidyverse pipeline builds the geometry, ggplot2 draws it, and it runs from the command line and as a local Shiny app.
-- **`web/` is what people actually use.** A TypeScript port of that pipeline, drawing in the browser with no R at all, published to GitHub Pages at <https://mharlass.github.io/thesis-cover/>.
+- **`app/R/` is the definition of the shared ridge geometry.** A tidyverse pipeline builds the geometry, ggplot2 draws its version, and it runs from the command line and as a local Shiny app.
+- **`web/` is what people actually use.** A TypeScript port of that geometry plus browser-only scene treatments and UI state, drawing with no R at all and published to GitHub Pages at <https://mharlass.github.io/thesis-cover/>. `contour_depth` and locally saved presets deliberately exist only here.
 
-The port exists because the site used to be the Shiny app compiled to WebAssembly, and a cold visit cost about 76 MB and 30–40 s before anything appeared. It is now about 120 kB and paints in well under a second. What that trade buys is speed; what it costs is a second implementation, so see "Keeping the two in step" below before touching either.
+The port exists because the site used to be the Shiny app compiled to WebAssembly, and a cold visit cost about 76 MB and 30–40 s before anything appeared. It is now about 120 kB and paints in well under a second. What that trade buys is speed; what it costs is a second implementation of the shared geometry, so see "Keeping the shared geometry in step" below before touching either.
 
 ## Commands
 
 ```sh
-# The R pipeline — the definition of the artwork
+# The R pipeline — the definition of the shared ridge geometry
 Rscript scripts/generate_cover.R                       # writes thesis-cover.svg
 Rscript scripts/generate_cover.R --preset candidate_v31 --out cover.pdf
 Rscript scripts/generate_cover.R --seed 7 --view front --out front.png
@@ -33,7 +33,11 @@ node scripts/render_samples.mjs                        # compare all three emitt
 ../scripts/subset_fonts.sh                             # rebuild the Inter subsets
 ```
 
-Any parameter in `PARAM_SPEC` can be passed to the CLI as `--name value`. Output format follows the file extension: `.svg`, `.pdf`, `.png`.
+`render_samples.mjs` needs Playwright's Chromium, Poppler's `pdftocairo` and
+`uv`. It reports pixel differences and leaves PNGs behind; inspect those
+images, because it does not enforce a visual threshold.
+
+Any parameter in `app/R/params.R`'s `PARAM_SPEC` can be passed to the CLI as `--name value`. Output format follows the file extension: `.svg`, `.pdf`, `.png`. Browser-only parameters in `web/src/cover/params.ts`, currently `contour_depth`, are not accepted by the R CLI.
 
 R dependencies are managed with `renv`; run `renv::restore()` after cloning. `_site/` is build output and is gitignored — it is rebuilt by `.github/workflows/deploy-pages.yml` on every push to `main`.
 
@@ -41,7 +45,7 @@ R dependencies are managed with `renv`; run `renv::restore()` after cloning. `_s
 
 ### The R pipeline
 
-`app/R/` defines the artwork. Shiny sources that directory automatically and `scripts/generate_cover.R` sources it explicitly.
+`app/R/` defines the shared ridge geometry and the R-rendered artwork. Shiny sources that directory automatically and `scripts/generate_cover.R` sources it explicitly.
 
 ```
 cover_params()    validated parameters, from defaults / a preset / a URL
@@ -67,11 +71,11 @@ Files, in the order Shiny loads them:
 `web/src/cover/` is the port, function for function, with no DOM dependency above `scene.ts`. `web/src/ui/` is a Preact interface over it — no framework beyond Preact and its signals, because the interface is fifteen sliders and two previews and anything heavier would dominate the download this rewrite existed to shrink.
 
 ```
-coverParams()     the same validation and the same presets
+coverParams()     shared geometry validation plus browser-only scene settings
       |
 coverGeometry()   typed arrays: dims, xs, one Float64Array of y per line,
       |           strata, text — no drawing
-buildScene()      one description of the picture: gradients, strokes, type
+buildScene()      one description of the picture: gradients, strokes, relief, type
       |
       +-- drawScene()    Canvas2D, for both previews and the PNG
       +-- sceneToSvg()   the file the printer gets
@@ -88,9 +92,9 @@ The spline **interpolates**, so every vertex the regression fixtures pin is stil
 
 It costs file size: a `C` with six numbers where an `L` had two, so the downloaded SVG is about 2.6× the old one (the `candidate_v31` cover goes from 268 kB to 708 kB). `web/test/smoothing.test.ts` measures the accuracy claim rather than asserting it, and the obvious alternative — sampling more finely and keeping straight segments — was tried and rejected: it doubles the file again for a curve that is still faceted, just less so.
 
-### Keeping the two in step
+### Keeping the shared geometry in step
 
-Two implementations of the same artwork is exactly what this project spent its previous rewrite escaping, so the parity is enforced rather than hoped for. Three gates, all of which run in CI:
+Two implementations of the same ridge geometry is exactly what this project spent its previous rewrite escaping, so the parity is enforced rather than hoped for. Three gates, all of which run in CI:
 
 1. **`web/test/geometry.test.ts` against `web/test/fixtures/r-geometry.json`.** Twelve parameter sets, dumped from R by `scripts/dump_geometry_fixture.R`, covering the branches the legacy SVGs never reach: no strata, one stratum, colliding strata under heavy jitter, a fractional spine, both ends of the line-count range. Line styles, strata colours, text layout, and each line's ridge summarised by its sum, extremes and every twentieth sample — a single shifted PRNG draw moves the sum.
 2. **`web/test/legacy-svg.test.ts`**, which is `tests/testthat/test-geometry-legacy.R` applied to the port: both reproduce the two checked-in covers vertex by vertex to within 0.01 mm.
@@ -98,11 +102,46 @@ Two implementations of the same artwork is exactly what this project spent its p
 
 **So: change the R geometry, and you must re-run `Rscript scripts/dump_geometry_fixture.R`, port the change, and commit both.** The freshness check will catch you if you forget; the port's tests will catch you if you update the fixture without porting.
 
+This contract ends at `coverGeometry()`. A browser-only scene treatment may be
+added after geometry is built when it has no R or Shiny counterpart. It must
+default to no visual change, stay out of the PRNG and geometry fixture, and be
+implemented in all affected browser emitters. `contour_depth` follows that
+rule: `buildScene()` creates a low-edge relief stroke, and Canvas, SVG and PDF
+all consume the same `offsetY` value.
+
 Two things are deliberately *not* shared. R's `round()` breaks ties to even and JavaScript's `Math.round` does not, which shifts a cohort colour by one step and a stratum by one colormap index — `roundHalfEven()` in `palette.ts` exists only for that. And the viridis ramps are the exact 256-entry tables extracted from `viridisLite`, packed as hex strings, rather than re-derived.
 
-### Adding a parameter means adding one row
+### Adding parameters
 
-`PARAM_SPEC` in `app/R/params.R` is the only definition of a parameter. It feeds the defaults in `cover_params()`, the validation, the Shiny sidebar (built by iterating over it), and the URL query string. Add a row, use the value in `cover_geometry()` or `cover_ggplot()`, and everything else follows.
+For a shared geometry or R-rendering parameter, `PARAM_SPEC` in
+`app/R/params.R` remains the definition. It feeds the R defaults, validation,
+Shiny sidebar and URL state. Add the row there, port it to
+`web/src/cover/params.ts`, regenerate the fixture, and implement both sides.
+
+For an intentionally browser-only scene parameter, add the row only to
+`web/src/cover/params.ts`. Keep its default equivalent to the existing scene,
+apply it after `coverGeometry()`, cover it with scene tests, and run
+`web/scripts/render_samples.mjs` to compare Canvas, SVG and PDF.
+
+### Browser-only presets and contour relief
+
+Named personal presets live in `web/src/ui/saved-presets.ts` under the
+versioned local-storage key `thesis-cover:saved-presets:v1`. Each entry stores
+the complete validated `CoverParams`, including title and author. Names are
+trimmed, limited to 60 characters and unique without regard to case. Malformed
+entries are ignored individually so one bad value does not hide the rest.
+
+These presets belong to one browser profile. They are not synchronized and
+their names never enter the URL. Selecting one restores its values, after
+which the normal URL synchronization still creates a portable link for the
+browser site. R can restore the shared parameters from that URL but ignores
+browser-only values such as `contour_depth`.
+
+`contour_depth` is also browser-only. Its default is 0, so legacy covers remain
+unchanged. The `relief` preset sets it to 0.9. `buildScene()` interleaves a
+dark, downward-offset low edge with each existing path. This creates shallow
+occlusion and depth without changing the ridge vertices, colours, PRNG draw
+order or R geometry.
 
 ### The PRNG contract
 
@@ -122,7 +161,10 @@ The cover is set in Inter, which is neither installed in webR nor guaranteed on 
 
 So `register_cover_fonts()` also writes a fontconfig file into the session's temporary directory and points `FONTCONFIG_FILE` at it. It lists the vendored directory, the platform's own font directories so a character Inter lacks still has a fallback, and one `target="scan"` rule that reassigns Inter Medium's weight to bold — without it fontconfig matches Regular and fakes the weight rather than using Medium, which is the same 500-in-the-bold-slot mapping the registry uses. fontconfig reads its configuration once, on first use, which is why this happens at startup rather than inside `cover_save()`. A `FONTCONFIG_FILE` the caller has already set is left alone.
 
-webR's Cairo honours it too, so the PDF downloaded from the deployed app embeds `Inter-Regular` and `Inter-Medium` exactly as the command line does. `pdffonts` on the output is the check.
+The retired shinylive build's Cairo honoured it too, so its downloaded PDF
+embedded `Inter-Regular` and `Inter-Medium` exactly as the command line did.
+The published TypeScript app now embeds its TrueType subsets through
+`pdf-lib`; `pdffonts` on either output remains the check.
 
 `TEXT_BASELINE_RATIO` in `render.R` bridges SVG's baseline positioning and ggplot's bounding-box centring. It is **measured, not derived** — `test-render.R` renders text and checks the emitted baselines land within 0.1 mm of what `cover_text()` asked for, so the constant cannot drift unnoticed.
 
@@ -164,6 +206,8 @@ The fonts are subsetted by `scripts/subset_fonts.sh` from the full faces in `app
 
 ### In the browser build
 
+- **Saved presets are local, not shared data.** Do not put preset names in the URL or treat local storage as an authoritative source. Shared links remain the interchange format; storage entries must pass through `coverParams()` validation when read.
+- **Contour relief is a scene treatment, not geometry.** Keep `contour_depth = 0` identical to the legacy scene and do not spend PRNG draws on it. Any change to the relief stroke has to reach Canvas, SVG and PDF through `RidgeStroke`, pass `scene.test.ts`, and be inspected in the images from `render_samples.mjs`.
 - **An SVG that names only Inter Regular sets the title in Regular.** The cover uses Medium for the title, the spine title and the accent rule, and `font-weight: 400 500` on a single `@font-face` does *not* make the browser synthesise the other weight — it just uses the one face it has. This cost about 1.5 mm per title line and made the fit warning wrong. `sceneToSvg()` emits one `@font-face` per weight, and `sceneToInlineSvg()` embeds both. It is invisible on any machine that happens to have Inter installed, which is why `render_samples.mjs` exists.
 - **An SVG loaded into an `<img>` may not fetch anything.** That is how it gets rasterised, so a font referenced by URL simply does not arrive and the type silently falls back to the platform sans. Rasterising goes through `sceneToInlineSvg()`, which embeds the faces as data URIs.
 - **R's `round()` breaks ties to even; `Math.round` rounds half up.** Two places hit an exact `.5` — mixing `#3f424d` toward `#75798c` lands a channel on 78.5, and sampling a colormap at 0.3 lands the index on 76.5 — so the port would shift a cohort line and a stratum by one step. `roundHalfEven()` in `palette.ts` is there for exactly this and nothing else.
@@ -199,15 +243,16 @@ Still different:
 - **svglite's `<svg>` header uses points**, not `358mm` with a `0 0 358 246` viewBox. Physical size is preserved, which is what the printer uses. R only — the browser build writes the original's millimetre header.
 - **The ridge is a spline, not a polyline.** Same vertices, smooth between them; see "Curves, not facets". Browser only.
 
-And two the browser build introduces:
+And three the browser build introduces:
 
+- **Contour relief is optional and browser-only.** At `contour_depth > 0`, the scene adds a dark low edge beneath each line. The built-in `relief` preset uses 0.9; the default remains 0 and matches the R geometry without the extra strokes.
 - **The PDF has no Gaussian blur.** PDF has no blur operator, so `pdf.ts` falls back to the same `GLOW_HALOS` stack ggplot used. This is the one place the PDF is knowingly not what the SVG shows. Do not "fix" it with a single wide stroke — that reads as a fat band rather than a glow, which is what it looked like before the stack went in.
 - **PDF text is not kerned.** pdf-lib's `encodeText()` maps characters to glyphs without shaping, so it applies no GPOS kerning. The default title sets about 0.5 mm wider over 142 mm (0.35%) than the canvas and SVG do. Left alone deliberately: fixing it means bypassing pdf-lib's subsetting to emit a kerned `TJ` array, and SVG is the format the printer gets.
 
 ## Directory layout
 
-- `app/` — the Shiny app and, in `app/R/`, the R pipeline. The definition of the artwork.
-- `web/` — the published site. `src/cover/` is the port and the three emitters, `src/ui/` the Preact interface, `src/fonts/` the Inter subsets, `test/` the parity tests, `scripts/render_samples.mjs` the visual comparison.
+- `app/` — the Shiny app and, in `app/R/`, the shared ridge geometry and R renderer.
+- `web/` — the published site. `src/cover/` is the geometry port, browser scene and three emitters; `src/ui/` is the Preact interface and local preset store; `src/fonts/` holds the Inter subsets; `test/` covers parity, scene treatments and saved presets; `scripts/render_samples.mjs` is the visual comparison.
 - `scripts/` — command-line entry points: `generate_cover.R`, `dump_geometry_fixture.R` (refreshes the port's fixture), `subset_fonts.sh`, and `build_site.R` (the old WebAssembly build, kept but no longer published).
 - `tests/testthat/` — the R test suite.
 - `PhD Thesis Cover Design/`, `PhD Thesis Cover Design_v3/` — **archive.** The original base-R SVG string writer, its 1:1 JavaScript mirror and the proprietary "dc" preview component, kept as reference and as fixtures for the regression test. Do not develop here. Note that the two checked-in `thesis-cover.svg` files are load-bearing: both implementations are tested against them.

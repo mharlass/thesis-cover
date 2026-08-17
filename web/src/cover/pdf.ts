@@ -280,7 +280,7 @@ class ScenePainter {
               round: true,
             }))
           : [{ width: stroke.width, alpha: stroke.alpha, round: false }];
-      const path = this.pathOps(stroke.ys);
+      const path = this.pathOps(stroke.ys, stroke.offsetY);
       const [r, g, b] = rgb(stroke.colour);
       for (const pass of passes) {
         strokeOps.push(
@@ -309,12 +309,13 @@ class ScenePainter {
     this.ops.push("q", `/${mask} gs`, `/${formName} Do`, "Q");
   }
 
-  private pathOps(ys: Float64Array): string {
+  private pathOps(ys: Float64Array, offsetY = 0): string {
     const xs = this.scene.xs;
-    const parts = [`${fmt(xs[0])} ${fmt(ys[0])} m`];
+    const parts = [`${fmt(xs[0])} ${fmt(ys[0] + offsetY)} m`];
     for (const s of smoothSegments(xs, ys)) {
       parts.push(
-        `${fmt(s.c1x)} ${fmt(s.c1y)} ${fmt(s.c2x)} ${fmt(s.c2y)} ${fmt(s.x)} ${fmt(s.y)} c`,
+        `${fmt(s.c1x)} ${fmt(s.c1y + offsetY)} ${fmt(s.c2x)} ${fmt(s.c2y + offsetY)} ` +
+          `${fmt(s.x)} ${fmt(s.y + offsetY)} c`,
       );
     }
     return parts.join("\n");

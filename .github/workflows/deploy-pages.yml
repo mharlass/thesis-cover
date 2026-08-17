@@ -52,10 +52,11 @@ jobs:
         with:
           path: _site
 
-  # app/R/ is still the definition of the artwork: the browser build is a port
-  # of it, held to a fixture dumped from it and to the same checked-in SVGs.
-  # These tests are what stop the definition moving without anyone noticing, so
-  # they gate the deploy even though nothing they touch is published.
+  # app/R/ is still the definition of the shared ridge geometry. The browser
+  # build is held to a fixture dumped from it and to the same checked-in SVGs;
+  # browser-only scene treatments are covered by the site job above. These R
+  # tests stop the shared definition moving unnoticed, so they gate the deploy
+  # even though nothing they touch is published.
   r-pipeline:
     runs-on: ubuntu-latest
     steps:

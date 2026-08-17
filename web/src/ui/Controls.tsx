@@ -4,6 +4,8 @@
 // collapsible section per group of parameters, then the editable text. Adding
 // a parameter still means adding one row to PARAM_SPEC and nothing here.
 
+import { useState } from "preact/hooks";
+
 import { STRATA_PALETTES } from "../cover/palette";
 import {
   PARAM_SECTIONS,
@@ -13,7 +15,16 @@ import {
   type CoverParams,
   type ParamSpec,
 } from "../cover/params";
-import { applyPreset, params, preset, update } from "./state";
+import {
+  BUILTIN_PRESET_PREFIX,
+  SAVED_PRESET_PREFIX,
+  applyPreset,
+  params,
+  preset,
+  savedPresets,
+  saveCurrentPreset,
+  update,
+} from "./state";
 
 function labelFor(spec: ParamSpec): string {
   return spec.unit ? `${spec.label} (${spec.unit})` : spec.label;
@@ -149,10 +160,44 @@ function TextSection() {
 }
 
 export function Controls() {
+  const [showSave, setShowSave] = useState(false);
+  const [presetName, setPresetName] = useState("");
+  const [saveError, setSaveError] = useState<string | null>(null);
+
+  const closeSave = () => {
+    setShowSave(false);
+    setPresetName("");
+    setSaveError(null);
+  };
+
+  const save = (event: Event) => {
+    event.preventDefault();
+    try {
+      saveCurrentPreset(presetName);
+      closeSave();
+    } catch (cause) {
+      setSaveError(cause instanceof Error ? cause.message : String(cause));
+    }
+  };
+
   return (
     <aside class="sidebar">
       <div class="field">
-        <label for="preset">Preset</label>
+        <div class="preset-heading">
+          <label for="preset">Preset</label>
+          <button
+            type="button"
+            class="text-button"
+            aria-expanded={showSave}
+            aria-controls="save-preset-form"
+            onClick={() => {
+              setShowSave(!showSave);
+              setSaveError(null);
+            }}
+          >
+            Save current
+          </button>
+        </div>
         <select
           id="preset"
           value={preset.value}
@@ -163,12 +208,56 @@ export function Controls() {
               Custom
             </option>
           )}
-          {Object.entries(PRESET_LABELS).map(([name, label]) => (
-            <option key={name} value={name}>
-              {label}
-            </option>
-          ))}
+          <optgroup label="Built in">
+            {Object.entries(PRESET_LABELS).map(([name, label]) => (
+              <option key={name} value={`${BUILTIN_PRESET_PREFIX}${name}`}>
+                {label}
+              </option>
+            ))}
+          </optgroup>
+          {savedPresets.value.length > 0 && (
+              <optgroup label="Saved in this browser">
+              {savedPresets.value.map((saved) => (
+                <option key={saved.id} value={`${SAVED_PRESET_PREFIX}${saved.id}`}>
+                  {saved.name}
+                </option>
+              ))}
+            </optgroup>
+          )}
         </select>
+        {showSave && (
+          <form id="save-preset-form" class="preset-save" onSubmit={save}>
+            <label class="visually-hidden" for="preset-name">
+              Preset name
+            </label>
+            <input
+              id="preset-name"
+              type="text"
+              class="text-input"
+              value={presetName}
+              maxLength={60}
+              placeholder="Preset name"
+              autoFocus
+              onInput={(e) => {
+                setPresetName(e.currentTarget.value);
+                setSaveError(null);
+              }}
+            />
+            <div class="preset-save-actions">
+              <button type="submit" class="compact primary">
+                Save preset
+              </button>
+              <button type="button" class="compact" onClick={closeSave}>
+                Cancel
+              </button>
+            </div>
+            {saveError && (
+              <p class="field-error" role="alert">
+                {saveError}
+              </p>
+            )}
+          </form>
+        )}
       </div>
       {PARAM_SECTIONS.map((section) => (
         <Section key={section} name={section} open={section === "Line art"} />

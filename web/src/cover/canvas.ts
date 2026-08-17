@@ -133,6 +133,8 @@ function drawRidge(
 
   const canBlur = supportsFilter(target);
   for (const stroke of scene.ridge) {
+    target.save();
+    if (stroke.offsetY !== 0) target.translate(0, stroke.offsetY);
     target.lineCap = "butt";
     target.lineJoin = "round";
     target.strokeStyle = stroke.colour;
@@ -146,6 +148,7 @@ function drawRidge(
         traceSmooth(target, scene.xs, stroke.ys);
         target.stroke();
       }
+      target.restore();
       continue;
     }
 
@@ -155,6 +158,7 @@ function drawRidge(
     target.beginPath();
     traceSmooth(target, scene.xs, stroke.ys);
     target.stroke();
+    target.restore();
   }
   target.filter = "none";
   target.globalAlpha = 1;

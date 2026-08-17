@@ -13,7 +13,15 @@ the top.
 
 Move the sliders, set the title, download the result. The address bar tracks
 the current settings, so a cover you like is just a link you can send to
-someone.
+someone. **Save current** also stores a named preset in this browser, ready to
+restore on a later visit. Saved presets stay in that browser profile; sharing
+still works through the URL rather than through the local preset name.
+
+The built-in **Contour relief** preset shows the optional depth treatment. It
+adds a restrained dark low edge beneath each line, making the ridge read more
+like a mountain seen from the side without changing the underlying profile.
+The **Contour depth** slider ranges from the unchanged original at 0 to the
+strongest relief at 1.
 
 ## Downloads
 
@@ -38,12 +46,12 @@ Two implementations, for two different jobs.
 cd web
 npm install
 npm run dev            # local dev server
-npm test               # the tests, including parity with the R pipeline
+npm test               # geometry parity plus browser scene and UI tests
 npm run build          # static site into _site/
 ```
 
-**The R pipeline** defines the artwork and renders from the command line.
-Dependencies are managed with `renv`.
+**The R pipeline** defines the shared ridge geometry and provides its own
+command-line renderer. Dependencies are managed with `renv`.
 
 ```sh
 Rscript -e 'renv::restore()'                           # once, after cloning
@@ -55,13 +63,17 @@ Rscript -e 'shiny::runApp("app")'                      # the R app, locally
 Rscript -e 'testthat::test_dir("tests/testthat")'      # the tests
 ```
 
-Every parameter the app exposes can be passed to the command line as
-`--name value`. The output format follows the file extension.
+Every shared geometry parameter can be passed to the command line as
+`--name value`. The output format follows the file extension. Browser-only
+features such as **Contour depth** and locally saved presets are not part of
+the R command-line implementation.
 
-The two are held together rather than trusted to agree: the browser build is
-tested against a geometry fixture dumped from R, and both are tested against
-the same two checked-in covers, vertex by vertex. Changing one and not the
-other fails the build.
+The shared geometry is held together rather than trusted to agree: the browser
+build is tested against a fixture dumped from R, and both implementations are
+tested against the same two checked-in covers, vertex by vertex. Browser-only
+scene treatments are applied after that geometry step and are tested across
+Canvas, SVG and PDF instead. URLs remain complete for the browser site; the R
+app restores their shared settings but has no contour-relief counterpart.
 
 The site used to be the R app compiled to WebAssembly, which worked but cost a
 76 MB download and half a minute of waiting before it could draw anything.
@@ -70,10 +82,10 @@ The site used to be the R app compiled to WebAssembly, which worked but cost a
 ## Contributing
 
 [`AGENTS.md`](AGENTS.md) is the guide to the internals — the pipeline, the
-pseudo-random number contract that makes covers reproducible, how the two
-implementations are kept in step, the print conventions, and a list of traps
-that have already caught somebody. Worth reading before changing anything that
-draws.
+pseudo-random number contract that makes covers reproducible, the boundary
+between shared geometry and browser-only scene features, the print
+conventions, and a list of traps that have already caught somebody. Worth
+reading before changing anything that draws.
 
 Deployment is automatic: pushing to `main` runs both test suites and rebuilds
 the site.
